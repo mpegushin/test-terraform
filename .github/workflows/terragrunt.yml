@@ -6,7 +6,7 @@ on:
       working_dir:
         description: "path to the terragrunt dir"
         required: true
-        default: "live/server"
+        default: "my-super-server/live/server"
       command:
         description: "terragrunt command"
         required: true
