@@ -30,15 +30,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Install Terragrunt and Terraform
+        uses: gruntwork-io/terragrunt-action@v3
         with:
-          terraform_version: "1.10.5"
-
-      - name: Install Terragrunt
-        uses: autero1/terragrunt-install@v1
-        with:
-          terragrunt_version: "0.76.1"
+          tg_version: '0.76.1'
+          terraform_version: '1.10.5'
 
       - name: Export Timeweb token
         run: echo "TWC_TOKEN=${{ secrets.TWC_TOKEN }}" >> $GITHUB_ENV
