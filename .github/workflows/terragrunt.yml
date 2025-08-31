@@ -1,0 +1,66 @@
+name: terraform CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      working_dir:
+        description: "path to the terragrunt dir"
+        required: true
+        default: "live/server"
+      command:
+        description: "terragrunt command"
+        required: true
+        default: "plan"
+        type: choice
+        options: [init, plan, apply]
+
+permissions:
+  contents: read
+
+jobs:
+  terragrunt:
+    name: terragrunt ${{ github.event.inputs.command }} (${{ github.event.inputs.working_dir }})
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: tg-${{ github.event.inputs.working_dir }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+
+      - name: Install Terragrunt
+        uses: autero1/terragrunt-install@v1
+        with:
+          terragrunt_version: "0.76.1"
+
+      - name: Export Timeweb token
+        run: echo "TWC_TOKEN=${{ secrets.TWC_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Export AWS credentials
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
+      
+
+      - name: Terragrunt init
+        working-directory: ${{ github.event.inputs.working_dir }}
+        run: terragrunt init
+
+      - name: Terragrunt plan
+        if: ${{ github.event.inputs.command == 'plan' }}
+        working-directory: ${{ github.event.inputs.working_dir }}
+        run: terragrunt plan -no-color
+      
+
+      - name: Terragrunt apply
+        if: ${{ github.event.inputs.command == 'apply' }}
+        working-directory: ${{ github.event.inputs.working_dir }}
+        run: terragrunt apply -auto-approve
